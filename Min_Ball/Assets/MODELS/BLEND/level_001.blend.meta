@@ -10,23 +10,28 @@ ModelImporter:
     100004: Bucket
     100006: //RootNode
     100008: Cube
+    100010: Cylinder
     400000: Ball
     400002: Bank
     400004: Bucket
     400006: //RootNode
     400008: Cube
+    400010: Cylinder
     2300000: Ball
     2300002: Bank
     2300004: Bucket
     2300006: Cube
+    2300008: Cylinder
     3300000: Ball
     3300002: Bank
     3300004: Bucket
     3300006: Cube
+    3300008: Cylinder
     4300000: Bucket
     4300002: Ball
     4300004: Bank
     4300006: Cube
+    4300008: Cylinder
     7400000: Default Take
     9500000: //RootNode
   materials:

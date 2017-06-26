@@ -1,66 +1,64 @@
-﻿// Upgrade NOTE: replaced '_Object2World' with 'unity_ObjectToWorld'
-
-// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
-
-Shader "Unlit/minimist_shader"
+﻿Shader "Lit/Simple Diffuse"
 {
-	Properties
-	{
-		_colour ("New_Colour", Color) = (1,1,1,1)
-		_texture ("Main_Tex", 2d) = "white"
-	}
-	SubShader
-	{
-		Tags { "RenderType"="Opaque" }
-		LOD 100
+    Properties
+    {
+        [NoScaleOffset] _MainTex ("Texture", 2D) = "white" {}
+    }
+    SubShader
+    {
+        Pass
+        {
+            // indicate that our pass is the "base" pass in forward
+            // rendering pipeline. It gets ambient and main directional
+            // light data set up; light direction in _WorldSpaceLightPos0
+            // and color in _LightColor0
+            Tags {"LightMode"="ForwardBase"}
+        
+            CGPROGRAM
+            #pragma vertex vert
+            #pragma fragment frag
+            #include "UnityCG.cginc" // for UnityObjectToWorldNormal
+            #include "UnityLightingCommon.cginc" // for _LightColor0
 
-		Pass
-		{
-			CGPROGRAM
-
-			#pragma vertex vert
-			#pragma fragment frag
-
-			struct appdata
+			struct adddata
 			{
-				float4 vertex : POSITION;
-				float3 normal : NORMAL;
-				float2 texcoord : TEXCOORD0;
+				
 			};
 
-			struct v2f
-			{
-				float4 pos : SV_POSITION;
-				float3 normal : NORMAL;
-				float2 texcoord : TEXCOORD0;
-			};
+            struct v2f
+            {
+                float2 uv : TEXCOORD0;
+                fixed4 diff : COLOR0; // diffuse lighting color
+                float4 vertex : SV_POSITION;
+            };
 
-			fixed4 _colour;
-			sampler2D _mainTex;
+            v2f vert (appdata_base v)
+            {
+                v2f o;
+                o.vertex = UnityObjectToClipPos(v.vertex);
+                o.uv = v.texcoord;
+                // get vertex normal in world space
+                half3 worldNormal = UnityObjectToWorldNormal(v.normal);
+                // dot product between normal and light direction for
+                // standard diffuse (Lambert) lighting
+                half nl = max(0, dot(worldNormal, _WorldSpaceLightPos0.xyz));
+				//half t = floor(nl + .7);
+                // factor in the light color
+                o.diff = nl * _LightColor0;
+                return o;
+            }
+            
+            sampler2D _MainTex;
 
-			v2f vert (appdata IN)
-			{
-				v2f OUT;
-				OUT.pos = UnityObjectToClipPos(IN.vertex);
-				OUT.normal = mul(float4(IN.normal,0.0), unity_ObjectToWorld).xyz;
-				OUT.texcoord = IN.texcoord;
-				return OUT;
-			}
-
-			fixed4 frag (v2f IN) : Color
-			{
-				fixed4 _texColour = tex2D(_mainTex, IN.texcoord);
-
-				float3 normalDir = normalize(IN.normal);
-				float3 lightDir = normalize(_WorldSpaceLightPos0.xyz);
-				float3 diff = unity_LightColor0.rgb * max(0.0,dot(normalDir,lightDir));
-
-				return _colour * _texColour * float4(diff, 0);
-
-				//return _texColour;
-			}
-
-			ENDCG
-		}
-	}
+            fixed4 frag (v2f i) : SV_Target
+            {
+                // sample texture
+                fixed4 col = tex2D(_MainTex, i.uv);
+                // multiply by lighting
+                col *= i.diff;
+                return col;
+            }
+            ENDCG
+        }
+    }
 }
